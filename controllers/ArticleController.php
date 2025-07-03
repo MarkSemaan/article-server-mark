@@ -1,30 +1,98 @@
-<?php 
+<?php
 
 require(__DIR__ . "/../models/Article.php");
+require(__DIR__ . "/../models/Category.php");
 require(__DIR__ . "/../connection/connection.php");
 require(__DIR__ . "/../services/ArticleService.php");
 require(__DIR__ . "/../services/ResponseService.php");
 
-class ArticleController{
-    
-    public function getAllArticles(){
+class ArticleController
+{
+    public function get()
+    {
         global $mysqli;
-
-        if(!isset($_GET["id"])){
-            $articles = Article::all($mysqli);
-            $articles_array = ArticleService::articlesToArray($articles); 
-            echo ResponseService::success_response($articles_array);
-            return;
-        }
-
         $id = $_GET["id"];
         $article = Article::find($mysqli, $id)->toArray();
-        echo ResponseService::success_response($article);
+        $responseService = new ResponseService();
+        echo $responseService->success_response($article);
         return;
     }
 
-    public function deleteAllArticles(){
-        die("Deleting...");
+    public function getAll()
+    {
+        global $mysqli;
+        $articles = Article::all($mysqli);
+        $articles_array = ArticleService::articlesToArray($articles);
+        $responseService = new ResponseService();
+        echo $responseService->success_response($articles_array);
+        return;
+    }
+
+    public function create()
+    {
+        global $mysqli;
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (empty($data["name"]) || empty($data["author"]) || empty($data["description"])) {
+            $responseService = new ResponseService();
+            echo $responseService->error_response("Missing required fields", 400);
+            return;
+        }
+        $article_id = Article::create($mysqli, $data);
+        $responseService = new ResponseService();
+        echo $responseService->success_response(["id" => $article_id]);
+        return;
+    }
+    public function update()
+    {
+        global $mysqli;
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id = $_GET["id"];
+        if (empty($data["name"]) || empty($data["author"]) || empty($data["description"])) {
+            $responseService = new ResponseService();
+            echo $responseService->error_response("Missing required fields", 400);
+            return;
+        }
+        $article = Article::update($mysqli, $id, $data);
+        $responseService = new ResponseService();
+        if ($article) {
+            echo $responseService->success_response(["message" => "Article updated successfully"]);
+        } else {
+            echo $responseService->error_response("Failed to update article", 500);
+        }
+    }
+
+    public function deleteAll()
+    {
+        global $mysqli;
+        $articles = Article::deleteAll($mysqli);
+        $responseService = new ResponseService();
+        if ($articles) {
+            echo $responseService->success_response(["message" => "All articles deleted successfully"]);
+        } else {
+            echo $responseService->error_response("Failed to delete articles", 500);
+        }
+    }
+    public function delete()
+    {
+        global $mysqli;
+        $id = $_GET["id"];
+        $article = Article::delete($mysqli, $id);
+        $responseService = new ResponseService();
+        if ($article) {
+            echo $responseService->success_response(["message" => "Article deleted successfully"]);
+        } else {
+            echo $responseService->error_response("Failed to delete article", 500);
+        }
+    }
+    public function getCategory()
+    {
+        global $mysqli;
+        $id = $_GET["id"];
+        $article = Article::find($mysqli, $id);
+        $category_id = $article->getCategoryId();
+        $category = Category::find($mysqli, $category_id);
+        $responseService = new ResponseService();
+        echo $responseService->success_response($category);
     }
 }
 

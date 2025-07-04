@@ -11,8 +11,7 @@ class CategoryService
         foreach ($categories as $category) {
             $categories_array[] = [
                 "id" => $category->id,
-                "name" => $category->name,
-                "description" => $category->description,
+                "name" => $category->name
             ];
         }
         return $categories_array;
